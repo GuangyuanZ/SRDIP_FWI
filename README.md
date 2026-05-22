@@ -26,10 +26,11 @@ https://github.com/liufeng2317/ADFWI
 
 After installing SWIT-1.0, replace the following directories/files in the SWIT folder using the contents provided in `SRDIP_FWI`:
 
-```text
+
 SRDIP_FWI/toolbox   -->   SWIT/toolbox
+
 SRDIP_FWI/fd2dmpi  -->   SWIT/fd2dmpi
-```
+
 
 ### Step 4. Recompile fd2dmpi
 
