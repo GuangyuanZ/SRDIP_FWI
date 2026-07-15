@@ -47,7 +47,7 @@ grad_mask = np.ones_like(vp_true)
 
 
 # density models, (Gardner, 1974)
-rho_true = np.power(vp_true, 0.25) * 310 
+rho_true = np.power(vp_init, 0.25) * 310 
 rho_init = np.power(vp_init, 0.25) * 310 
 
 ### sources setup 
