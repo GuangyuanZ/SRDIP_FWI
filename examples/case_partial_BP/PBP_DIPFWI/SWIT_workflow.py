@@ -79,8 +79,8 @@ step_length1 = 0.01                                 # Network parameter update s
 step_length2 = 25                                 # Network input update step size(Self-reinforcement DIPFWI)
 decay_step1 = 150                                 # Network parameter update decay step size
 decay_step2 = 50                                 # Network input update decay step size(Self-reinforcement DIPFWI)
-vpmax       = vp_true.max()                                 # maximum allowed velocity
-vpmin       = vp_true.min()                                 # minimum allowed velocity
+vpmax       = 4510                                 # maximum allowed velocity
+vpmin       = 1000                                 # minimum allowed velocity
 marine_or_land = 'Land'                            # 'Land' or 'Marine'
 device = 'cuda:0' # or device = 'cpu'              # device for DIPFWI or SRDIPFWI 'cuda:0' or 'cpu'
 
