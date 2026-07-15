@@ -169,6 +169,8 @@ def shrink(x, lambda_):
 
 
 
+
+
 def write_parfile(simu, simu_type, src, savesnap = 0):
     ''' write parameter file for the fd2dmpi solver
     '''
@@ -187,14 +189,14 @@ def write_parfile(simu, simu_type, src, savesnap = 0):
 
     # save source time function
     for isrc in range(simu.source.n):
-        savebinfloat32(srcpath + 'src%d.bin' % (isrc+1), src[isrc])
+        savebinfloat32(srcpath + 'src%d.bin' % (isrc+1), src[isrc, :])
 
     # save P-wave velocity and density files
     vp  = simu.model.vp
     rho = simu.model.rho
     savebinfloat32(path + 'parfile/model/vel.bin', vp)
     savebinfloat32(path + 'parfile/model/rho.bin', rho)
-    
+
     # Write Parameter file for acoustic solver
     fp = open(parpath, "w")
     fp.write('######################################### \n')
@@ -231,42 +233,29 @@ def write_parfile(simu, simu_type, src, savesnap = 0):
     fp.write('STORE_STEP=%d\n'       % savestep)
     fp.close()
 
-
     ####################################################################
     #
     # Write geometry file for acoustic solver. The format is as follows:
     #
     # column           1        2      3    4     5     6        7
     # meaning     ( S_index  R_index  Sx    Sz    Rx    Rz  S_is_alive(0/1) )
-    #
+    # 
     ####################################################################
 
     srcn = simu.source.n
     recn = simu.receiver.n
     srcxz = simu.source.xz
     recxz = simu.receiver.xz
-    recn_new = 0
-    rec_num = np.loadtxt(path + 'model/record_num/rec_num.dat')
-    # rec_num = np.loadtxt('/data/guangyuan/SWIT-1.0/examples/Hessian_matrix/model/rec_num.dat')
-    for i in range(srcn):
-        recn_new = recn_new +  rec_num[i,1] - rec_num[i,0] + 1
+
     fp = open(path + 'parfile/model/coord.txt', "w")
-    geom = np.zeros((int(recn_new), 7))
-    rec_sum = 0
+    geom = np.zeros((recn*srcn, 7))
     for isrc in range(srcn):
-        rec_num1 = rec_num[isrc,0]
-        rec_num2 = rec_num[isrc,1]
-        rec_num1 = int(rec_num1)
-        rec_num2 = int(rec_num2)
-        recn = rec_num2 - rec_num1 + 1
-        recn = int(recn)
         for irec in range(recn):
-            ig = irec + rec_sum
-            geom[ig, :] = np.array([isrc+1, irec+rec_num1, srcxz[isrc, 0], srcxz[isrc, 1],
-                                    recxz[isrc, irec+rec_num1-1, 0], recxz[isrc, irec+rec_num1-1, 1], 1])
+            ig = irec + recn*(isrc-1)
+            geom[ig, :] = np.array([isrc+1, irec+1, srcxz[isrc, 0], srcxz[isrc, 1],
+                                    recxz[isrc, irec, 0], recxz[isrc, irec, 1], 1])
             fp.write('%6i %6i %10.1f %10.1f %10.1f %10.1f %10.1f\n' % (
                 geom[ig, 0], geom[ig, 1], geom[ig, 2], geom[ig, 3], geom[ig, 4], geom[ig, 5], geom[ig, 6]))
-        rec_sum = rec_sum + recn
     fp.close()
 
  

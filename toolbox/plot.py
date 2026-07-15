@@ -20,7 +20,8 @@ from multiprocessing import Pool
 
 from tools import loadsu, add_su_header, convert_wavelet_su, savebinfloat32
 
-### Plot acquisition geometry
+
+
 def plot_geometry(simu):
     ''' Plot source and receiver acquisition geometry
     '''
@@ -30,24 +31,20 @@ def plot_geometry(simu):
     figpath = simu.system.homepath + 'figures/'
 
     # Acquisition geometry
-    figpath = simu.system.homepath + '/figures/'
-    homepath = simu.system.homepath + '/model/record_num/rec_num.dat'
-    rec_num = np.loadtxt(homepath)
-    # Acquisition geometry
     fig = plt.figure()
     ax  = fig.add_subplot(111)
     for isrc in range(srcn):
-        rec_num1 = int(rec_num[isrc,0]) - 1
-        rec_num2 = int(rec_num[isrc,1])
         if np.mod(isrc,1) == 0:
-            plt.scatter(recxz[isrc,rec_num1 : rec_num2, 0], 0 * recxz[isrc,rec_num1 : rec_num2, 1] + 1 * isrc + 1, c = 'green', marker='o', s = 2)
+            plt.scatter(recxz[isrc,:,0], 0 * recxz[isrc,:, 1] + 1 * isrc + 1, c = 'green', marker='o', s = 2)
             plt.scatter(srcxz[isrc, 0],  0 * srcxz[isrc,   1] + 1 * isrc + 1, c = 'red',   marker='^', s = 6)
+
     ax.set_ylim(0,  srcn+1)
     plt.xlabel('Distance-x (m)', fontsize=12)
     plt.ylabel('Shot #', fontsize=12)
     plt.title('Acquisition Geometry, %d sources\n' % (srcn), fontsize=14)
     plt.savefig(figpath + 'Acquisition-Geometry.png', dpi=300)
     plt.close()
+
     
 
 ### Plot source time function (STF).

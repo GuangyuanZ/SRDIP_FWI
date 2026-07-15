@@ -43,8 +43,6 @@ subroutine forward_modeling(parfile)
 
   character(len=*), intent(in) :: parfile
   character(len=200)      :: str
-  real,             allocatable ::  c1(:,:), den1(:,:), item(:,:)
-  integer,          allocatable ::  fs1(:)
   call start_mpi
 
   ! Read input parameters
@@ -86,12 +84,12 @@ subroutine forward_modeling(parfile)
   call get_assigned(1, coord%ns, is1, is2)
 
   ! Read g num
-  allocate(item(coord%ns, 2))
-  open(unit = 11, FILE = './model/record_num/rec_num.dat')
-  do i = 1,coord%ns,1
-    READ(11,*)(item(i,j),j=1,2)
-  enddo
-  close(11)
+  ! allocate(item(coord%ns, 2))
+  ! open(unit = 11, FILE = './model/record_num/rec_num.dat')
+  ! do i = 1,coord%ns,1
+  !   READ(11,*)(item(i,j),j=1,2)
+  ! enddo
+  ! close(11)
 
   do is = is1, is2, 1
     call filename(str,'./parfile/forward_source/src',is,'.bin')
@@ -102,44 +100,45 @@ subroutine forward_modeling(parfile)
       flush(6)
     endif
 
-    par%nx = int( item(is, 2) - item(is, 1) + 1 )
-    coord%ngmax = int( item(is, 2) - item(is, 1) + 1 )
-    coord%xs(is) = coord%xs(is) - (item(is,1) - 1) * par%dx
-    coord%ng(is) = int( item(is, 2) - item(is, 1) + 1 )
-    coord%xg(is,:) = coord%xg(is,:) - (item(is,1) - 1) *par%dx
+    ! par%nx = int( item(is, 2) - item(is, 1) + 1 )
+    ! coord%ngmax = int( item(is, 2) - item(is, 1) + 1 )
+    ! coord%xs(is) = coord%xs(is) - (item(is,1) - 1) * par%dx
+    ! coord%ng(is) = int( item(is, 2) - item(is, 1) + 1 )
+    ! coord%xg(is,:) = coord%xg(is,:) - (item(is,1) - 1) *par%dx
     deallocate(damp)
     deallocate(damp_global)
    ! PML setting: damp & damp_global
     call init_pml(par%nx, par%nz, par%npml)
-    allocate(c1(nz_pml,nx_pml), den1(nz_pml,nx_pml))
-    allocate(fs1(nx_pml))
-    den1(:, npml+1:npml+par%nx ) = den(:, int(npml+item(is,1)):int(npml+item(is,2)))
-    do j =1, npml, 1
-      den1(:,j) = den1(:, npml+1)
-      den1(:,nx_pml + 1-j) = den1(:, npml+par%nx) 
-    enddo
-    c1(:, npml+1:npml+par%nx ) = c(:, int(npml+item(is,1)):int(npml+item(is,2)))
-    do j =1, npml, 1
-      c1(:,j) = c1(:, npml+1)
-      c1(:,nx_pml + 1-j) = c1(:, npml+par%nx) 
-    enddo
-    fs1(npml+1:npml+par%nx) = fs(par%npml+item(is,1):par%npml+item(is,2))
-    fs1(1:npml) = fs1(npml+1)
-    fs1(nx_pml-npml+1:nx_pml) = fs1(nx_pml-npml)
-    par%vmin = min_value(c(iz1:iz2,ix1:ix2),par%nz,par%nx,fs1-npml)
+    ! allocate(c1(nz_pml,nx_pml), den1(nz_pml,nx_pml))
+    ! allocate(fs1(nx_pml))
+    ! den1(:, npml+1:npml+par%nx ) = den(:, int(npml+item(is,1)):int(npml+item(is,2)))
+    ! do j =1, npml, 1
+    !   den1(:,j) = den1(:, npml+1)
+    !   den1(:,nx_pml + 1-j) = den1(:, npml+par%nx) 
+    ! enddo
+    ! c1(:, npml+1:npml+par%nx ) = c(:, int(npml+item(is,1)):int(npml+item(is,2)))
+    ! do j =1, npml, 1
+    !   c1(:,j) = c1(:, npml+1)
+    !   c1(:,nx_pml + 1-j) = c1(:, npml+par%nx) 
+    ! enddo
+    ! fs1(npml+1:npml+par%nx) = fs(par%npml+item(is,1):par%npml+item(is,2))
+    ! fs1(1:npml) = fs1(npml+1)
+    ! fs1(nx_pml-npml+1:nx_pml) = fs1(nx_pml-npml)
+    par%vmin = min_value(c(iz1:iz2,ix1:ix2),par%nz,par%nx,fs-npml)
     call setup_pml(par%dx, par%vmin)
    
     !par%fileformat = 'bi' 
     
-    call staggered42_modeling_is(is, par, coord, s, c1, den1, fs1, nx_pml, nz_pml, npml, damp_global, store_snap)
-    deallocate(c1, fs1, den1)
+    call staggered42_modeling_is(is, par, coord, s, c, den, fs, nx_pml, nz_pml, npml, damp_global, store_snap)
+    ! deallocate(c, fs, den)
   enddo
 
 
   !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!   
   call MPI_Barrier(MPI_COMM_WORLD, ierr)
 
-  deallocate(c, den, s, fs, damp, damp_global, item)
+  ! deallocate(c, den, s, fs, damp, damp_global, item)
+  deallocate(c, den, s, fs, damp, damp_global)
 
   999 continue
 
@@ -158,8 +157,7 @@ subroutine adjoint_modeling(parfile)
   
   character(len=*), intent(in) :: parfile
   character(len=200)      :: str
-  real,            allocatable  :: c2(:,:), den2(:,:), item1(:,:)
-  integer,         allocatable  :: fs2(:)
+
    
   call start_mpi
   
@@ -171,10 +169,10 @@ subroutine adjoint_modeling(parfile)
   
   ! PML setting: damp & damp_global
   call init_pml(par%nx, par%nz, par%npml) 
-  z1_tmp = iz1
-  z2_tmp = iz2
-  x1_tmp = ix1
-  x2_tmp = ix2
+  ! z1_tmp = iz1
+  ! z2_tmp = iz2
+  ! x1_tmp = ix1
+  ! x2_tmp = ix2
 
   ! Read acquisition geometry data
   call readcoordfile(par%coordfile, coord) !MPI
@@ -223,12 +221,12 @@ subroutine adjoint_modeling(parfile)
 
   ! Read rec number on grid 
 
-  allocate(item1(coord%ns, 2))
-  open(unit = 12, FILE = './model/record_num/rec_num.dat')
-  do i = 1,coord%ns,1
-    READ(12,*)(item1(i,j),j=1,2)
-  enddo
-  close(12)
+  ! allocate(item1(coord%ns, 2))
+  ! open(unit = 12, FILE = './model/record_num/rec_num.dat')
+  ! do i = 1,coord%ns,1
+  !   READ(12,*)(item1(i,j),j=1,2)
+  ! enddo
+  ! close(12)
   do is = is1, is2, 1
     
     
@@ -236,8 +234,8 @@ subroutine adjoint_modeling(parfile)
     call filename(str,'./parfile/forward_source/src',is,'.bin')
     call read_binfile(str, s, par%nt)
 
-    par%nx = int( item1(is, 2) - item1(is, 1) + 1 )
-    coord%ngmax = int( item1(is, 2) - item1(is, 1) + 1 )
+    ! par%nx = int( item1(is, 2) - item1(is, 1) + 1 )
+    ! coord%ngmax = int( item1(is, 2) - item1(is, 1) + 1 )
 
     ! Read adjoint source
     allocate(s_adj(par%nt, coord%ngmax))
@@ -259,14 +257,14 @@ subroutine adjoint_modeling(parfile)
     call read_binfile(str, w_end, par%nz, par%nx)
 
     ! Initial parameter
-    coord%xs(is) = coord%xs(is) - (item1(is,1) - 1) * par%dx
-    coord%ng(is) = int( item1(is, 2) - item1(is, 1) + 1 )
-    coord%xg(is,:) = coord%xg(is,:) - (item1(is,1) - 1) *par%dx
+    ! coord%xs(is) = coord%xs(is) - (item1(is,1) - 1) * par%dx
+    ! coord%ng(is) = int( item1(is, 2) - item1(is, 1) + 1 )
+    ! coord%xg(is,:) = coord%xg(is,:) - (item1(is,1) - 1) *par%dx
     deallocate(damp)
     deallocate(damp_global)
     call init_pml(par%nx, par%nz, par%npml)
-    allocate(c2(nz_pml,nx_pml), den2(nz_pml,nx_pml))
-    allocate(fs2(nx_pml))
+    ! allocate(c2(nz_pml,nx_pml), den2(nz_pml,nx_pml))
+    ! allocate(fs2(nx_pml))
     allocate(p0_bk(nz_pml,nx_pml))
     allocate(p_bk(nz_pml,nx_pml))
     allocate(u_bk(nz_pml,nx_pml))
@@ -276,22 +274,22 @@ subroutine adjoint_modeling(parfile)
     u_bk = 0.0
     w_bk = 0.0
     
-    den2(:, npml+1:npml+par%nx ) = den(:, int(npml+item1(is,1)):int(npml+item1(is,2)))
-    do j =1, npml, 1
-      den2(:,j) = den2(:, npml+1)
-      den2(:,nx_pml + 1-j) = den2(:, npml+par%nx) 
-    enddo
-    c2(:, npml+1:npml+par%nx ) = c(:, int(npml+item1(is,1)):int(npml+item1(is,2)))
-    do j =1, npml, 1
-      c2(:,j) = c2(:, npml+1)
-      c2(:,nx_pml + 1 - j ) = c2(:, npml+par%nx)
-    enddo
-    fs2(npml+1:npml+par%nx) = fs(par%npml+item1(is,1):par%npml+item1(is,2))
-    fs2(1:npml) = fs2(npml+1)
-    fs2(nx_pml-npml+1:nx_pml) = fs2(nx_pml-npml)
+    ! den2(:, npml+1:npml+par%nx ) = den(:, int(npml+item1(is,1)):int(npml+item1(is,2)))
+    ! do j =1, npml, 1
+    !   den2(:,j) = den2(:, npml+1)
+    !   den2(:,nx_pml + 1-j) = den2(:, npml+par%nx) 
+    ! enddo
+    ! c2(:, npml+1:npml+par%nx ) = c(:, int(npml+item1(is,1)):int(npml+item1(is,2)))
+    ! do j =1, npml, 1
+    !   c2(:,j) = c2(:, npml+1)
+    !   c2(:,nx_pml + 1 - j ) = c2(:, npml+par%nx)
+    ! enddo
+    ! fs2(npml+1:npml+par%nx) = fs(par%npml+item1(is,1):par%npml+item1(is,2))
+    ! fs2(1:npml) = fs2(npml+1)
+    ! fs2(nx_pml-npml+1:nx_pml) = fs2(nx_pml-npml)
 
     ! Determine minimum velocity
-    par%vmin = min_value(c2(iz1:iz2,ix1:ix2),par%nz,par%nx,fs2-npml)
+    par%vmin = min_value(c(iz1:iz2,ix1:ix2),par%nz,par%nx,fs-npml)
 
     ! Setup PML damping coefficient
     call setup_pml(par%dx, par%vmin)
@@ -302,21 +300,22 @@ subroutine adjoint_modeling(parfile)
 
       p0_bk = p_bk
       
-      call staggered42_reco_it(is, it, par, coord, s, c2(iz1:iz2,ix1:ix2), den2(iz1:iz2,ix1:ix2), fs2, &
+      call staggered42_reco_it(is, it, par, coord, s, c(iz1:iz2,ix1:ix2), den(iz1:iz2,ix1:ix2), fs, &
                                 boundary, p_end, u_end, w_end)
-      call staggered42_back_it(is, it, par, coord, s_adj, c2, den2, fs2, nx_pml, nz_pml, npml, damp_global, p_bk, u_bk,w_bk)
-    
-      
-      dg(:,int(item1(is,1)):int(item1(is,2)))  = dg(:,int(item1(is,1)):int(item1(is,2))) + &
-                                                 p_end  * (p0_bk(iz1:iz2,ix1:ix2) - p_bk(iz1:iz2,ix1:ix2))
+      call staggered42_back_it(is, it, par, coord, s_adj, c, den, fs, nx_pml, nz_pml, npml, damp_global, p_bk, u_bk,w_bk)
+      dg  = dg  + p_end * (p0_bk(iz1:iz2,ix1:ix2)-p_bk(iz1:iz2,ix1:ix2))
+      dfw = dfw + p_end * p_end
+      dbk = dbk + p_bk(iz1:iz2,ix1:ix2) *  p_bk(iz1:iz2,ix1:ix2)
+      ! dg  = dg(:,int(item1(is,1)):int(item1(is,2))) + &
+      !                                            p_end  * (p0_bk(iz1:iz2,ix1:ix2) - p_bk(iz1:iz2,ix1:ix2))
 
-      dfw(:,int(item1(is,1)):int(item1(is,2)))  = dfw(:,int(item1(is,1)):int(item1(is,2))) + p_end * p_end
+      ! dfw(:,int(item1(is,1)):int(item1(is,2)))  = dfw(:,int(item1(is,1)):int(item1(is,2))) + p_end * p_end
 
-      dbk(:,int(item1(is,1)):int(item1(is,2)))  = dbk(:,int(item1(is,1)):int(item1(is,2))) + &
-                                                  p_bk(iz1:iz2,ix1:ix2) * p_bk(iz1:iz2,ix1:ix2)
+      ! dbk(:,int(item1(is,1)):int(item1(is,2)))  = dbk(:,int(item1(is,1)):int(item1(is,2))) + &
+      !                                             p_bk(iz1:iz2,ix1:ix2) * p_bk(iz1:iz2,ix1:ix2)
 
     enddo
-    deallocate(s_adj, boundary, p_end, u_end, w_end, c2, den2, fs2,p0_bk, p_bk, u_bk, w_bk)
+    deallocate(s_adj, boundary, p_end, u_end, w_end,p0_bk, p_bk, u_bk, w_bk)
   enddo
 
 
@@ -330,7 +329,7 @@ subroutine adjoint_modeling(parfile)
   if (rank == 0) then
     
     ! perform the proper scale to the gradient 
-    g = 2.0 * g / c(z1_tmp:z2_tmp,x1_tmp:x2_tmp)
+    g = 2.0 * g / c(iz1:iz2,ix1:ix2)
 
     call filename(output, par%data_out, 0, '_kernel_vp.bin')
     call write_binfile(output,  g, par%nz, num_tmp) 
@@ -346,7 +345,8 @@ subroutine adjoint_modeling(parfile)
   ! call write_binfile('/data/xuejing/SWIT-1.0/examples/fw.bin',fw,par%nz,par%nx)
 
 
-  deallocate(c, den, s, fs, damp, damp_global,item1)
+  ! deallocate(c, den, s, fs, damp, damp_global,item1)
+  deallocate(c, den, s, fs, damp, damp_global)
   deallocate(dg, dfw, dbk, g, fw, bk)
 
   999 continue

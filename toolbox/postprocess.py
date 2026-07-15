@@ -34,8 +34,8 @@ def grad_precond(simu, optim, grad, forw, back):
     back = vector2array(back, nx, nz)
     
     # plot forward and backward illumination
-    # plot_model2D(simu, forw.T, np.min(forw), 10 * np.median(forw), 'forw-illum-%03d' % optim.iter, 'my_seismic_cmap')
-    # plot_model2D(simu, back.T, np.min(back), 10 * np.median(back), 'back-illum-%03d' % optim.iter, 'my_seismic_cmap')
+    plot_model2D(simu, forw.T, np.min(forw), 10 * np.median(forw), 'forw-illum-%03d' % optim.iter, 'my_seismic_cmap')
+    plot_model2D(simu, back.T, np.min(back), 10 * np.median(back), 'back-illum-%03d' % optim.iter, 'my_seismic_cmap')
     # grad[::-1] = grad[::-2]
     # grad[nx-1,:] = 0
     # grad[nx-2,:] = 0

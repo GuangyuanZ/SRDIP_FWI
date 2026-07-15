@@ -332,3 +332,35 @@ def source_wavelet_process(stf, stf_dt=0.001, use_dt = 0.001, use_nt=4001, shift
         ValueError('wrong size of the source wavelet')
 
     return stf
+
+def source_wavelet_process(stf, stf_dt=0.001, use_dt = 0.001, use_nt=4001, shift = 0.0, lowpass = 0, highpass = 50, taper_beg=0.005):
+    ''' source wavelet process
+    '''
+    # convert to su
+    stf = array2su(1, stf_dt, stf)
+    t0 = stf[0].stats.starttime 
+    stf.resample(1.0/use_dt)
+    stf.detrend('demean')
+    stf.detrend('linear')
+    # filter
+    if lowpass == 0:
+        stf.filter('lowpass', freq=highpass)#, corners=4, zerophase=True)
+    elif 0 < lowpass < highpass:
+        stf.filter('bandpass', freqmin=lowpass, freqmax=highpass)#, corners=4, zerophase=True)
+    else:
+        pass
+    stf.trim(starttime=t0, endtime=t0 + use_dt*(use_nt-1), 
+             pad=True, nearest_sample=True, fill_value=0.)
+    #stf[0].data[:] = smooth1d(stf[0].data[:], window_len = 5)
+    # apply shift
+    if shift > 0:
+        shift = int(shift//use_dt)
+        stf[0].data[0:-1-shift] =  stf[0].data[shift:-1]
+    
+    stf.taper(taper_beg, type='hann', side='left')
+
+    stf = stf[0].data[:]
+    if stf.size != use_nt:
+        ValueError('wrong size of the source wavelet')
+
+    return stf
