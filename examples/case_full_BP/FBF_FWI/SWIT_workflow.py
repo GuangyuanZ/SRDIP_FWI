@@ -47,7 +47,7 @@ grad_mask = np.ones_like(vp_true)
 
 
 # density models, (Gardner, 1974)
-rho_true = np.power(vp_true, 0.25) * 310 
+rho_true = np.power(vp_init, 0.25) * 310 
 rho_init = np.power(vp_init, 0.25) * 310 
 
 ### sources setup 
@@ -77,7 +77,7 @@ step_length1 = 0.01                                 # Network parameter update s
 step_length2 = 1                                 # Network input update step size(Self-reinforcement DIPFWI)
 decay_step1 = 250                                 # Network parameter update decay step size
 decay_step2 = 250                                 # Network input update decay step size(Self-reinforcement DIPFWI)
-vpmax       = vp_true.max()                                 # maximum allowed velocity
+vpmax       = 5000                                 # maximum allowed velocity
 vpmin       = vp_true.min()                                 # minimum allowed velocity
 marine_or_land = 'Land'                            # 'Land' or 'Marine'
 device = 'cuda:0' # or device = 'cpu' 
